@@ -63,8 +63,9 @@ jobs:
           path: example/dist/
       - name: Run tests
         run: |
+          ls example/dist/standalone/
           cd example/ && nohup npm run serve:standalone &
-          cd ../ketcher-autotests
+          cd ketcher-autotests/
           npm i
           npx playwright install chromium
           npx playwright test -g "Cut the reaction"
