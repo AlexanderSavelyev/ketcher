@@ -68,7 +68,7 @@ jobs:
           cd ketcher-autotests/
           npm i
           npx playwright install chromium
-          npx playwright test -g "Cut the reaction"
+          npx playwright test
     # steps:
     #   - uses: actions/checkout@v3
     #     with:
