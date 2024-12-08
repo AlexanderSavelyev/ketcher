@@ -14,7 +14,7 @@ env:
   # See: https://github.com/orgs/community/discussions/25228#discussioncomment-3246960
   CI: false
   MODE: standalone
-  KETCHER_URL: http://host.docker.internal:4002
+  KETCHER_URL: http://127.0.0.1:4002
   DOCKER: true
   IGNORE_UNSTABLE_TESTS: true
   CI_ENVIRONMENT: true
@@ -37,15 +37,37 @@ jobs:
         run: npm ci
       - name: Build all packages
         run: npm run build:packages && npm run build:example:standalone
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ketcher-dist
+          path: example/dist
   playwright_tests:
     timeout-minutes: 120
     runs-on: self-hosted
+    needs: build_ketcher
     container: mcr.microsoft.com/playwright:v1.37.0
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 1
+      - name: Install dependencies
+        run: npm ci
+      - name: Create folder for dist
+        run: mkdir -p example/dist
+      - name: Download compiled ketcher
+        uses: actions/download-artifact@v3
+        with:
+          name: ketcher-dist
+          path: example/dist/
+      - name: Run tests
+        run: |
+          cd example/ && nohup npm run serve:standalone &
+          cd ../ketcher-autotests
+          npm i
+          npx playwright install chromium
+          npx playwright test -g "Cut the reaction"
     # steps:
     #   - uses: actions/checkout@v3
     #     with:
