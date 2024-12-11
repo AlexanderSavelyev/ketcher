@@ -10,6 +10,7 @@ import {
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
+// dotenv.config();
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -104,7 +105,7 @@ const config: PlaywrightTestConfig = {
   retries: isCI ? MAX_NUMBER_OF_RETRIES : 0,
   /* Opt out of parallel tests on CI. */
   // eslint-disable-next-line no-magic-numbers
-  workers: process.env.CI ? MIN_AMOUNT_OF_WORKERS : os.cpus().length,
+  workers: isCI ? os.cpus().length : MIN_AMOUNT_OF_WORKERS,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     [
@@ -114,7 +115,12 @@ const config: PlaywrightTestConfig = {
       },
     ],
     ['line'],
-    // ['./reporters/TimeReporter.ts'],
+    // [
+    //   'json',
+    //   {
+    //     outputFile: 'results.json' 
+    //   }
+    // ]
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
