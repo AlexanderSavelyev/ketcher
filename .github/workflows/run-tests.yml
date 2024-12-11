@@ -18,12 +18,13 @@ env:
   DOCKER: true
   IGNORE_UNSTABLE_TESTS: true
   CI_ENVIRONMENT: true
-  ENABLE_POLYMER_EDITOR: true
   USE_SEPARATE_INDIGO_WASM: true
 jobs:
-  build_ketcher:
+  build_ketcher_micro:
     runs-on: ubuntu-latest
     container: node:18.14-bullseye-slim
+    env:
+      ENABLE_POLYMER_EDITOR: false
     steps:
       - name: Install dependencies
         run: apt-get update -y && apt-get install -y git
@@ -40,12 +41,35 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ketcher-dist
+          name: ketcher-dist-micro
           path: example/dist
-  playwright_tests:
+  build_ketcher_macro:
+    runs-on: ubuntu-latest
+    container: node:18.14-bullseye-slim
+    env:
+      ENABLE_POLYMER_EDITOR: true
+    steps:
+      - name: Install dependencies
+        run: apt-get update -y && apt-get install -y git
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Git safe
+        run: git config --global --add safe.directory '*'
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Build all packages
+        run: npm run build:packages && npm run build:example:standalone
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ketcher-dist-macro
+          path: example/dist
+  playwright_tests_micro:
     timeout-minutes: 120
     runs-on: self-hosted
-    needs: build_ketcher
+    needs: build_ketcher_micro
     container: mcr.microsoft.com/playwright:v1.37.0
     steps:
       - name: Checkout
@@ -59,8 +83,56 @@ jobs:
       - name: Download compiled ketcher
         uses: actions/download-artifact@v3
         with:
-          name: ketcher-dist
+          name: ketcher-dist-micro
           path: example/dist/
+      - name: Create env file
+        run: |
+          cat > ketcher-autotests/.env << EOF
+          DOCKER=true
+          KETCHER_URL=$KETCHER_URL
+          MODE=$MODE
+          IGNORE_UNSTABLE_TESTS=$IGNORE_UNSTABLE_TESTS
+          CI_ENVIRONMENT=$CI_ENVIRONMENT
+          USE_SEPARATE_INDIGO_WASM=$USE_SEPARATE_INDIGO_WASM
+          EOF
+      - name: Run tests
+        run: |
+          ls example/dist/standalone/
+          cd example/ && nohup npm run serve:standalone &
+          cd ketcher-autotests/
+          npm i
+          npx playwright install chromium
+          npx playwright test
+  
+  playwright_tests_macro:
+    timeout-minutes: 120
+    runs-on: self-hosted
+    needs: build_ketcher_macro
+    container: mcr.microsoft.com/playwright:v1.37.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Install dependencies
+        run: npm ci
+      - name: Create folder for dist
+        run: mkdir -p example/dist
+      - name: Download compiled ketcher
+        uses: actions/download-artifact@v3
+        with:
+          name: ketcher-dist-macro
+          path: example/dist/
+      - name: Create env file
+        run: |
+          cat > ketcher-autotests/.env << EOF
+          DOCKER=true
+          KETCHER_URL=$KETCHER_URL
+          MODE=$MODE
+          IGNORE_UNSTABLE_TESTS=$IGNORE_UNSTABLE_TESTS
+          CI_ENVIRONMENT=$CI_ENVIRONMENT
+          USE_SEPARATE_INDIGO_WASM=$USE_SEPARATE_INDIGO_WASM
+          EOF
       - name: Run tests
         run: |
           ls example/dist/standalone/
