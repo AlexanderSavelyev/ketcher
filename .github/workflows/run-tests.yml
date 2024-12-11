@@ -102,7 +102,14 @@ jobs:
           cd ketcher-autotests/
           npm i
           npx playwright install chromium
-          npx playwright test
+          npx playwright test --reporter=html
+      - uses: actions/upload-artifact@v3
+        # run even if previous steps fails
+        if: always()
+        with:
+          name: playwright-report-micro
+          path: ketcher-autotests/playwright-report/
+          retention-days: 5
   
   playwright_tests_macro:
     timeout-minutes: 120
@@ -140,7 +147,14 @@ jobs:
           cd ketcher-autotests/
           npm i
           npx playwright install chromium
-          npx playwright test
+          npx playwright test --reporter=html
+      - uses: actions/upload-artifact@v3
+        # run even if previous steps fails
+        if: always()
+        with:
+          name: playwright-report-macro
+          path: ketcher-autotests/playwright-report/
+          retention-days: 5
     # steps:
     #   - uses: actions/checkout@v3
     #     with:
