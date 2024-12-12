@@ -102,7 +102,7 @@ jobs:
           cd ketcher-autotests/
           npm i
           npx playwright install chromium
-          npx playwright test --reporter=html
+          npx playwright test
       - uses: actions/upload-artifact@v3
         # run even if previous steps fails
         if: always()
@@ -147,7 +147,7 @@ jobs:
           cd ketcher-autotests/
           npm i
           npx playwright install chromium
-          npx playwright test --reporter=html
+          npx playwright test
       - uses: actions/upload-artifact@v3
         # run even if previous steps fails
         if: always()
